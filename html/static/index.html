@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.js"></script>
+    <title>Index</title>
+</head>
+
+<body>
+    <label for="stock">Select a stock:</label>
+    <input list="stocks" name="stock" id="stock">
+    <datalist id="stocks">
+    </datalist>
+</body>
+
+<script>
+    $(function () {
+        $("#stock").keyup(function () {
+            const stockFilter = $("#stock").val();
+            if (stockFilter && stockFilter.length > 2) {
+                $.ajax({
+                    url: '{{ url_for("search") }}',
+                    type: 'POST',
+                    data: { stock_filter: $("#stock").val() }
+                }).done(function (data) {
+                    console.log(data);
+                    $("#stocks").empty();
+                    Object.values(data).forEach(item => {
+                        $("#stocks").append($("<option>").attr('value', item.code).text(item.name.concat(" - ").concat(item.region)));
+                    });
+                });
+            }
+        });
+    });
+</script>
+
+</html>
