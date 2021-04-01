@@ -1,5 +1,5 @@
 # Stocks
-This is a simple project to put in practice Python and Flask knowledge, consuming a stocks API to search retrieve it's values.
+This is a simple project to put in practice Python and Flask knowledge, consuming a stocks API to search, retrieve and display it's values.
 
 # How to execute?
 
