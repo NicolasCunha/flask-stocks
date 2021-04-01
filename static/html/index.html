@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style_index.css') }}">
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.js"></script>
+    <title>Index</title>
+</head>
+
+<body>
+    <label for="stock">Select a stock:</label>
+    <input list="stocks" name="stock" id="stock">
+    <datalist id="stocks"></datalist>
+    <button id="buttonQuotations">Get Quotations</button>
+    <div id="error">
+        <h3>Not all values could be loaded. Alpha Vantage's Free API has a limit of 5 request per minute, 500 per
+            day.</h3>
+        <h3>Please try again in a few moments.</h3>
+    </div>
+    <div id="tableDaily"></div>
+    <div id="tableWeekly"></div>
+    <div id="tableMonthly"></div>
+</body>
+
+<script>
+    $(function () {
+
+        function hideDivs() {
+            $("#tableDaily").hide();
+            $("#tableWeekly").hide();
+            $("#tableMonthly").hide();
+            $("#error").hide();
+        }
+
+        hideDivs();
+        $("#buttonQuotations").prop("disabled", true);
+        $("#stock").keyup(function () {
+            const stockFilter = $("#stock").val();
+            if (stockFilter && stockFilter.length > 2) {
+                $.ajax({
+                    url: '{{ url_for("search") }}',
+                    type: 'POST',
+                    data: { stock_filter: $("#stock").val() }
+                }).done(function (data) {
+                    $("#error").hide();
+                    $("#stocks").empty();
+                    if (data.error) {
+                        $("#error").show();
+                        $("#buttonQuotations").prop("disabled", true);
+                    } else {
+                        Object.values(data).forEach(item => {
+                            $("#stocks").append($("<option>").attr('value', item.code).text(item.name.concat(" - ").concat(item.region)));
+                        });
+                        $("#buttonQuotations").prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        function createTable(parentId, caption, values) {
+            $(parentId).empty();
+            var $table = $('<table>');
+            $table.append('<caption>' + caption + ' (in $) </caption>')
+                .append('<thead>').children('thead')
+                .append('<tr />').children('tr').append('<th>Date</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th>');
+
+            var $tbody = $table.append('<tbody />').children('tbody');
+
+            Object.values(values).forEach(item => {
+                $tbody.append('<tr />').children('tr:last')
+                    .append("<td>" + item.date + "</td>")
+                    .append("<td>" + item.open + "</td>")
+                    .append("<td>" + item.high + "</td>")
+                    .append("<td>" + item.low + "</td>")
+                    .append("<td>" + item.close + "</td>")
+                    .append("<td>" + item.volume + "</td>")
+            });
+
+            $table.appendTo(parentId);
+            $(parentId).show();
+        }
+
+        $("#buttonQuotations").click(function (event) {
+            const selectedStock = $("#stock").val();
+            if (selectedStock) {
+                $.ajax({
+                    url: '{{ url_for("get_values") }}',
+                    type: 'POST',
+                    data: { stock_filter: selectedStock }
+                }).done(function (data) {
+                    console.log(data);
+                    $("#stocks").empty();
+                    hideDivs();
+                    if (data.error) {
+                        $("#error").show();
+                        $("#buttonQuotations").prop("disabled", true);
+                    }
+                    if (data.daily) {
+                        createTable("#tableDaily", "Daily Values", data.daily);
+                    }
+                    if (data.weekly) {
+                        createTable("#tableWeekly", "Weekly Values", data.weekly);
+                    }
+                    if (data.monthly) {
+                        createTable("#tableMonthly", "Monthly Values", data.monthly);
+                    }
+                    $("#buttonQuotations").prop("disabled", false);
+                });
+            }
+        });
+    });
+</script>
+
+</html>
