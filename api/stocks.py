@@ -2,7 +2,8 @@ import requests
 import json
 import logging
 
-# The following is the URL for a symbol search (stock "code")
+# The following URL's are the default for a get requests
+# They can be found in Alpha Vantage's documentation https://www.alphavantage.co/documentation/
 SEARCH_DEFAULT_URL = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={}&apikey={}"
 DAILY_VALUE_DEFAULT_URL = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={}&outputsize=compact&apikey={}"
 WEEKLY_VALUE_DEFAULT_URL = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol={}&outputsize=compact&apikey={}"
@@ -20,7 +21,7 @@ class Stocks:
         # Execute a GET request
         result = requests.get(url)
         if(result != None):
-            # Trasnform the JSON to a Python dictionary
+            # Transform the JSON to a Python dictionary
             resultDict = json.loads(result.text)
             responseDict = {}
             i = 0
@@ -34,9 +35,10 @@ class Stocks:
                     }
                     responseDict.update({i : dictEntry})
                     i = i + 1
-            except:
+            except Exception:
                 # Alpha Vantage Free API has a limit of 5 request per minute, 500 per day.
                 responseDict.update({"error": True, "desc": "Api is not avaiable. Alpha Vantage Free API has a limit of 5 request per minute, 500 per day."})
+                logging.exception("Exception")
             return responseDict
         # If no result was found, return a empty array
         return ['']
@@ -46,14 +48,19 @@ class Stocks:
         return newDict
 
     def get_value_url(self, extUrl, term, tag, responseTag):
+        # Format the URL to contain the term to be searched, as well as the API key that was
+        # defined when starting the server.
         url = extUrl.format(term, self.api_key)
+        # Execute a GET request
         result = requests.get(url)
         if (result != None):
+            # Transform the JSON to a Python dictionary
             resultDict = json.loads(result.text)
             responseDict = {}        
             i = 0
             try:
-                # Each entry in "bestMatches" is a stock
+                # Each entry in "tag" is a result
+                # "[:7]" retrives the first 7 seven values in the list
                 for match in list(resultDict[tag].items())[:7]:
                     values = match[1]
                     dictEntry = {
@@ -71,7 +78,8 @@ class Stocks:
                 # Alpha Vantage Free API has a limit of 5 request per minute, 500 per day.
                 responseDict.update({"error": True, "desc": "Api is not avaiable. Alpha Vantage Free API has a limit of 5 request per minute, 500 per day."})
                 logging.exception("Exception")
-            return responseDict                
+            return responseDict
+        # If no result was found, return a empty array
         return ['']
 
     def get_values(self, term):
