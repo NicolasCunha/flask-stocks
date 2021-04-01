@@ -25,4 +25,4 @@ It will return a list of the stocks that includes that symbol.
 ## /_get_values
 
 Receives a request value "stock_filter" with the stock symbol from which values will be searched from.
-It will return a list of the past seven days highs and lows, past seven weeks highs and lows and past six months highs and lows.
+It will return a list of the past seven days values, past seven weeks values and past seven months values.
